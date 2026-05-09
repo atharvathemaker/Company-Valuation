@@ -314,7 +314,6 @@ with col_vis_2:
     st.write("**Rows: WACC | Columns: Terminal Growth**")
     st.dataframe(sensitivity_table, use_container_width=True)
 
-And here is the fully fixed code for excel_generator.py:
 
 import pandas as pd
 import io
