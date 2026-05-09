@@ -241,8 +241,9 @@ st.header("4. Export Model")
 
 from excel_generator import create_excel_model
 
-try:
-    excel_data = create_excel_model(
+@st.cache_data(show_spinner="Generating Excel Model...")
+def generate_excel():
+    return create_excel_model(
         df_historical=edited_df,
         metric_choice=metric_choice,
         tax_rate=tax_rate,
@@ -262,6 +263,8 @@ try:
         historical_fcff=historical_fcff
     )
 
+try:
+    excel_data = generate_excel()
     st.download_button(
         label="Download Valuation Model (Excel)",
         data=excel_data,
@@ -270,7 +273,6 @@ try:
     )
 except Exception as e:
     st.error(f"Error generating Excel model: {e}")
-
 
 st.header("4. Sensitivity Analysis & Visualizations")
 
