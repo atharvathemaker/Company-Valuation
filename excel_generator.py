@@ -3,7 +3,7 @@ import io
 
 def create_excel_model(df_historical, metric_choice, tax_rate, 
                        rfr, beta, erp, size_premium, csrp, ke, total_debt, total_equity, kd, wacc, 
-                       term_growth, df_growth_rates, liquidity_discount):
+                       term_growth, df_growth_rates, liquidity_discount, historical_fcff):
     
     output = io.BytesIO()
     
