@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -34,36 +33,36 @@ with col1:
     if df_erp is not None:
         countries = df_erp['Country'].tolist()
         default_idx = countries.index("United States") if "United States" in countries else 0
-        selected_country = st.selectbox("Select Country for ERP", countries, index=default_idx)
+        selected_country = st.selectbox("Select Country for ERP", countries, index=default_idx, key="country_select")
         country_erp = df_erp[df_erp['Country'] == selected_country]['Total_ERP'].values[0]
     else:
         selected_country = "United States"
         country_erp = 0.045
         st.warning("Could not fetch Damodaran data. Using 4.5% default ERP.")
 
-    ticker = st.text_input("Stock Ticker (for Beta)", value="AAPL")
-    benchmark = st.text_input("Benchmark Ticker", value="^GSPC")
+    ticker = st.text_input("Stock Ticker (for Beta)", value="AAPL", key="stock_ticker")
+    benchmark = st.text_input("Benchmark Ticker", value="^GSPC", key="bench_ticker")
     
     calc_beta = get_beta(ticker, benchmark)
     if calc_beta is None:
         st.warning("Could not calculate beta. Using 1.0 default.")
         calc_beta = 1.0
         
-    beta = st.number_input("Beta", value=float(calc_beta), format="%.4f")
-    rfr_input = st.number_input("Risk Free Rate", value=float(rfr), format="%.4f")
-    erp_input = st.number_input("Equity Risk Premium (ERP)", value=float(country_erp), format="%.4f")
+    beta = st.number_input("Beta", value=float(calc_beta), format="%.4f", key="beta_input")
+    rfr_input = st.number_input("Risk Free Rate", value=float(rfr), format="%.4f", key="rfr_input")
+    erp_input = st.number_input("Equity Risk Premium (ERP)", value=float(country_erp), format="%.4f", key="erp_input")
     
-    size_premium = st.number_input("Size Premium (%)", value=0.0, format="%.2f") / 100.0
-    csrp = st.number_input("Company Specific Risk Premium (%)", value=0.0, format="%.2f") / 100.0
+    size_premium = st.number_input("Size Premium (%)", value=0.0, format="%.2f", key="sp_input") / 100.0
+    csrp = st.number_input("Company Specific Risk Premium (%)", value=0.0, format="%.2f", key="csrp_input") / 100.0
     ke = rfr_input + (beta * erp_input) + size_premium + csrp
     st.metric("Calculated Cost of Equity (Ke)", f"{ke*100:.2f}%")
 
 with col2:
     st.subheader("Cost of Debt (Kd) & Capital Structure")
-    total_debt = st.number_input("Total Debt ($)", min_value=0.0, value=100000.0)
-    total_equity = st.number_input("Total Equity (Market Cap) ($)", min_value=0.0, value=400000.0)
-    kd_input = st.number_input("Pre-Tax Cost of Debt", value=0.05, format="%.4f")
-    tax_rate = st.number_input("Effective Tax Rate", value=0.21, format="%.4f")
+    total_debt = st.number_input("Total Debt ($)", min_value=0.0, value=100000.0, key="debt_input")
+    total_equity = st.number_input("Total Equity (Market Cap) ($)", min_value=0.0, value=400000.0, key="equity_input")
+    kd_input = st.number_input("Pre-Tax Cost of Debt", value=0.05, format="%.4f", key="kd_input")
+    tax_rate = st.number_input("Effective Tax Rate", value=0.21, format="%.4f", key="tax_input")
     
     total_capital = total_debt + total_equity
     if total_capital > 0:
@@ -82,13 +81,13 @@ with col3:
     st.metric("Calculated WACC", f"{calculated_wacc*100:.2f}%")
     
     st.markdown("---")
-    final_wacc = st.number_input("Override WACC for Valuation", value=float(calculated_wacc), format="%.4f")
+    final_wacc = st.number_input("Override WACC for Valuation", value=float(calculated_wacc), format="%.4f", key="wacc_input")
     st.success(f"Final WACC used for Valuation: {final_wacc*100:.2f}%")
 
 
 st.header("2. Financial Data (5 Years Historical)")
 
-metric_choice = st.selectbox("Base Metric to calculate FCFF", ["CFO (Cash Flow from Operations)", "Net Income", "EBIT", "EBITDA"])
+metric_choice = st.selectbox("Base Metric to calculate FCFF", ["CFO (Cash Flow from Operations)", "Net Income", "EBIT", "EBITDA"], key="metric_select")
 
 # Define required rows based on chosen metric
 required_rows = []
@@ -112,7 +111,7 @@ initial_data = pd.DataFrame(0.0, index=required_rows, columns=years)
 
 st.write("Enter historical financials (Year 1 is oldest, Year 5 is most recent).")
 st.info("For Working Capital (AR, Inventory, AP), enter the absolute balances. The app will calculate the Year-over-Year changes. Year 1 changes assume prior year was the same as Year 1 (Change = 0).")
-edited_df = st.data_editor(initial_data, use_container_width=True)
+edited_df = st.data_editor(initial_data, use_container_width=True, key="financials_grid")
 
 # Calculate historical FCFF based on edited_df
 historical_fcff = pd.Series(0.0, index=years)
@@ -170,7 +169,7 @@ st.header("3. Projections & Valuation")
 st.subheader("FCFF Growth Rate Assumptions")
 
 growth_method = st.radio("Starting Base Growth Rate:", 
-                         ["Custom Input", "Historical CAGR (Year 1 to Year 5)"])
+                         ["Custom Input", "Historical CAGR (Year 1 to Year 5)"], key="growth_method_radio")
                          
 if growth_method == "Historical CAGR (Year 1 to Year 5)":
     y1_fcff = historical_fcff["Year 1"]
@@ -184,7 +183,7 @@ if growth_method == "Historical CAGR (Year 1 to Year 5)":
 else:
     base_g = 0.05
 
-term_growth_rate = st.number_input("Terminal Growth Rate (%) (Compulsory)", value=2.0, format="%.2f") / 100.0
+term_growth_rate = st.number_input("Terminal Growth Rate (%) (Compulsory)", value=2.0, format="%.2f", key="term_growth_input") / 100.0
 
 st.write("Edit the year-by-year revenue/FCFF growth rates below. You can model a 'fade' to the terminal growth rate.")
 proj_years = ["Proj Year 1", "Proj Year 2", "Proj Year 3", "Proj Year 4", "Proj Year 5"]
@@ -196,7 +195,7 @@ default_growth_rates = [max(base_g - (step * i), term_growth_rate) for i in rang
 default_growth_pct = [g * 100 for g in default_growth_rates]
 
 growth_df_initial = pd.DataFrame([default_growth_pct], index=["Growth Rate (%)"], columns=proj_years)
-edited_growth_df = st.data_editor(growth_df_initial, use_container_width=True)
+edited_growth_df = st.data_editor(growth_df_initial, use_container_width=True, key="growth_rates_grid")
 
 # Project 5 years into the future based on Year 5
 projected_fcff = pd.Series(0.0, index=proj_years)
@@ -224,7 +223,7 @@ if final_wacc > term_growth_rate:
     
     enterprise_value = pv_of_fcff + pv_of_tv
     equity_value_pre_discount = enterprise_value - total_debt
-    liquidity_discount = st.number_input("Liquidity Discount (%)", value=0.0, format="%.2f") / 100.0
+    liquidity_discount = st.number_input("Liquidity Discount (%)", value=0.0, format="%.2f", key="liq_disc_input") / 100.0
     equity_value = equity_value_pre_discount * (1 - liquidity_discount)
     
     st.write(f"**PV of Projected FCFF (5 Years):** ${pv_of_fcff:,.2f}")
